@@ -180,11 +180,11 @@ def evaluate(retinanet, dataloader_val, parser, dataset_val, dataset_train, verb
 			verb_gt, nouns_gt, boxes_gt = get_ground_truth(image, dev_gt[image], verb_orders)
 			evaluator.update(verb, nouns, bboxes, verb_gt, nouns_gt, boxes_gt, verb_orders, 1)
 
-	print(evaluator.verb())
-	print(evaluator.value())
-	print(evaluator.value_all())
-	print(evaluator.value_bbox())
-	print(evaluator.value_all_bbox())
+	print("val/verb_acc",evaluator.verb())
+	print("val/value",evaluator.value())
+	print("val/value_all",evaluator.value_all())
+	print("val/value_bbox",evaluator.value_bbox())
+	print("val/value_all_bbox",evaluator.value_all_bbox())
 
 	writer.add_scalar("val/verb_acc", evaluator.verb(), epoch_num)
 	writer.add_scalar("val/value", evaluator.value(), epoch_num)
