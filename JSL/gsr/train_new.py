@@ -90,6 +90,7 @@ def main(args=None):
 
 
     #retinanet = torch.nn.DataParallel(retinanet).cuda()
+    retinanet = retinanet.cuda()
 
 
 
