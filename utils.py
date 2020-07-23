@@ -14,12 +14,15 @@ def load_net(fname, net_list, prefix_list = None):
         else:
             dict_all = torch.load(fname)
         dict = dict_all['state_dict']
-        #print('loaded ', dict)
-        #print('current ',net_list[0].state_dict() )
-
+        unnecessary_modules = ['vocab_linear', 'vocab_linear_2', 'verb_embeding', 'noun_embedding', 'regressionModel',
+                               'classificationModel', 'rnn', 'rnn_linear']
         try:
             for k, v in net_list[i].state_dict().items():
+                prefix = k.split('.')[0]
+                if prefix in unnecessary_modules:
+                    continue
                 if k in dict:
+                    print('copied ', k)
                     param = torch.from_numpy(np.asarray(dict[k].cpu()))
                     v.copy_(param)
                 else:
