@@ -13,6 +13,9 @@ from torch.utils.data import Dataset, DataLoader
 from global_utils.imsitu_eval import BboxEval
 from global_utils.format_utils import cmd_to_title
 from global_utils import format_utils
+
+import utils
+
 import sys
 print('CUDA available: {}'.format(torch.cuda.is_available()))
 
@@ -21,6 +24,7 @@ print('CUDA available: {}'.format(torch.cuda.is_available()))
 def main(args=None):
     parser = argparse.ArgumentParser(description='Simple training script for training a RetinaNet network.')
     parser.add_argument('--train-file', help='Path to file containing training annotations (see readme)')
+    parser.add_argument('--pretrained_model', help='Path to file containing training annotations (see readme)')
     parser.add_argument('--classes-file', help='Path to file containing class list (see readme)')
     parser.add_argument('--val-file', help='Path to file containing validation annotations (optional, see readme)')
     parser.add_argument('--role-file', help='Path to role file')
@@ -53,8 +57,46 @@ def main(args=None):
     dataloader_train, dataset_train, dataloader_val, dataset_val = init_data(parser, verb_orders)
     print("loading model")
     retinanet = model_new.resnet50(num_classes=dataset_train.num_classes(), num_nouns=dataset_train.num_nouns(), parser=parser, pretrained=True)
+
+
+    utils.load_net(parser.pretrained_model, [retinanet])
+
+    print('Loading pretrained RetinaNet finished!')
+
+
+    utils.set_trainable(retinanet, False)
+    utils.set_trainable(retinanet.vocab_linear, True)
+    utils.set_trainable(retinanet.vocab_linear_2, True)
+    utils.set_trainable(retinanet.verb_embeding, True)
+    utils.set_trainable(retinanet.noun_embedding, True)
+    utils.set_trainable(retinanet.regressionModel, True)
+    utils.set_trainable(retinanet.classificationModel, True)
+    utils.set_trainable(retinanet.rnn, True)
+    utils.set_trainable(retinanet.rnn_linear, True)
+
+    optimizer = torch.optim.Adamax([
+        {'params': retinanet.vocab_linear.parameters()},
+        {'params': retinanet.vocab_linear_2.parameters()},
+        {'params': retinanet.verb_embeding.parameters()},
+        {'params': retinanet.noun_embedding.parameters()},
+        {'params': retinanet.regressionModel.parameters()},
+        {'params': retinanet.classificationModel.parameters()},
+        {'params': retinanet.rnn.parameters()},
+        {'params': retinanet.rnn_linear.parameters()},
+    ], lr=1e-3)
+
+    scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9)
+
+
+
     retinanet = torch.nn.DataParallel(retinanet).cuda()
-    optimizer = optim.Adam(retinanet.parameters(), lr=parser.lr)
+
+
+
+
+
+
+    #optimizer = optim.Adam(retinanet.parameters(), lr=parser.lr)
 
     print('weights loaded')
 
@@ -62,7 +104,7 @@ def main(args=None):
 
     for epoch_num in range(parser.resume_epoch, parser.epochs):
         train(retinanet, optimizer, dataloader_train, parser, epoch_num, writer)
-        torch.save({'state_dict': retinanet.module.state_dict(), 'optimizer': optimizer.state_dict()}, log_dir + '/checkpoints/retinanet_{}.pth'.format(epoch_num))
+        #torch.save({'state_dict': retinanet.module.state_dict(), 'optimizer': optimizer.state_dict()}, log_dir + '/checkpoints/retinanet_{}.pth'.format(epoch_num))
         print('Evaluating dataset')
         eval_avg = evaluate(retinanet, dataloader_val, parser, dataset_val, dataset_train, verb_orders, dev_gt, epoch_num, writer, noun_dict)
 
