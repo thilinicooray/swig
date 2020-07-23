@@ -89,7 +89,7 @@ def main(args=None):
 
 
 
-    retinanet = torch.nn.DataParallel(retinanet).cuda()
+    #retinanet = torch.nn.DataParallel(retinanet).cuda()
 
 
 
@@ -110,6 +110,8 @@ def main(args=None):
 
         if eval_avg > best_eval:
             print('New best model at epoch ', epoch_num)
+
+        scheduler.step()
 
 
 def train(retinanet, optimizer, dataloader_train, parser, epoch_num, writer):

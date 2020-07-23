@@ -22,7 +22,7 @@ def load_net(fname, net_list, prefix_list = None):
                 if prefix in unnecessary_modules:
                     continue
                 if k in dict:
-                    print('copied ', k)
+                    #print('copied ', k)
                     param = torch.from_numpy(np.asarray(dict[k].cpu()))
                     v.copy_(param)
                 else:
