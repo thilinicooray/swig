@@ -194,6 +194,7 @@ def train(retinanet, optimizer, dataloader_train, parser, epoch_num, writer):
         loss.backward()
         torch.nn.utils.clip_grad_norm_(retinanet.parameters(), 1, norm_type="inf")
         optimizer.step()
+        break
 
 
 def evaluate(retinanet, dataloader_val, parser, dataset_val, dataset_train, verb_orders, dev_gt, epoch_num, writer, noun_dict):
@@ -236,6 +237,8 @@ def evaluate(retinanet, dataloader_val, parser, dataset_val, dataset_train, verb
                     bboxes.append(None)
             verb_gt, nouns_gt, boxes_gt = get_ground_truth(image, dev_gt[image], verb_orders)
             evaluator.update(verb, nouns, bboxes, verb_gt, nouns_gt, boxes_gt, verb_orders, 1)
+
+        break
 
     print("val/verb_acc",evaluator.verb())
     print("val/value",evaluator.value())

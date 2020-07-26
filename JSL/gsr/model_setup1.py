@@ -371,7 +371,7 @@ class ResNet_RetinaNet_RNN(nn.Module):
 
             mfb_iq_drop = self.Dropout_C(mfb_iq_eltwise)
 
-            mfb_iq_resh = mfb_iq_drop.view(batch_size* self.encoder.max_role_count, 1, -1, 1)   # N x 1 x 1000 x n_heads # we go with 1
+            mfb_iq_resh = mfb_iq_drop.view(batch_size, 1, -1, 1)   # N x 1 x 1000 x n_heads # we go with 1
             mfb_iq_sumpool = torch.sum(mfb_iq_resh, 3, keepdim=True)    # N x 1 x 1000 x 1
             mfb_out = torch.squeeze(mfb_iq_sumpool)                     # N x 1000
             mfb_sign_sqrt = torch.sqrt(F.relu(mfb_out)) - torch.sqrt(F.relu(-mfb_out))
