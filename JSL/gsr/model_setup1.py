@@ -16,6 +16,8 @@ from torch.autograd import Variable
 #from bbox_features import BoxFeatures
 from global_utils.resnet import ResNet
 
+from torch.nn.utils.weight_norm import weight_norm
+
 
 
 model_urls = {
@@ -25,6 +27,55 @@ model_urls = {
     'resnet101': 'https://download.pytorch.org/models/resnet101-5d3b4d8f.pth',
     'resnet152': 'https://download.pytorch.org/models/resnet152-b121ed2d.pth',
 }
+
+class FCNet(nn.Module):
+    """Simple class for non-linear fully connect network with gated tangent as in paper
+    """
+    def __init__(self, dims):
+        super(FCNet, self).__init__()
+
+        in_dim = dims[0]
+        out_dim = dims[1]
+        self.first_lin = weight_norm(nn.Linear(in_dim, out_dim), dim=None)
+        self.tanh = nn.Tanh()
+        self.second_lin = weight_norm(nn.Linear(in_dim, out_dim), dim=None)
+        self.sigmoid = nn.Sigmoid()
+
+
+    def forward(self, x):
+
+        y_hat = self.tanh(self.first_lin(x))
+        g = self.sigmoid(self.second_lin(x))
+        y = y_hat * g
+
+        return y
+
+class Attention(nn.Module):
+    def __init__(self, v_dim, q_dim, num_hid, dropout=0.2):
+        super(Attention, self).__init__()
+        self.nonlinear = FCNet([v_dim + q_dim, num_hid])
+        self.dropout = nn.Dropout(dropout)
+        self.linear = weight_norm(nn.Linear(num_hid, 1), dim=None)
+
+    def forward(self, v, q):
+        """
+        v: [batch, k, vdim]
+        q: [batch, qdim]
+        """
+        logits = self.logits(v, q)
+
+        w = nn.functional.softmax(logits, 1)
+        return w
+
+
+    def logits(self, v, q):
+        num_objs = v.size(1)
+        q = q.unsqueeze(1).repeat(1, num_objs, 1)
+        vq = torch.cat((v, q), 2)
+        joint_repr = self.nonlinear(vq)
+        joint_repr = self.dropout(joint_repr)
+        logits = self.linear(joint_repr)
+        return logits
 
 
 class PyramidFeatures(nn.Module):
@@ -225,9 +276,9 @@ class ResNet_RetinaNet_RNN(nn.Module):
         self.classificationModel = ClassificationModel(768, num_classes=num_classes, feature_size=256)
 
         self.query_composer = FCNet([512, 256])
-        v_att = Attention(img_embedding_size, 256, 256)
-        q_net = FCNet([256, 256 ])
-        v_net = FCNet([img_embedding_size, 256])
+        self.v_att = Attention(256, 256, 256)
+        self.q_net = FCNet([256, 256 ])
+        self.v_net = FCNet([256, 256])
 
         # fill class/reg branches with weights
         prior = 0.01
@@ -240,7 +291,7 @@ class ResNet_RetinaNet_RNN(nn.Module):
         self.verb_loss_function = nn.CrossEntropyLoss()
 
 
-    def forward(self, img_batch, annotations, verb, widths, heights, epoch_num, detach_resnet=False, use_gt_nouns=False, use_gt_verb=False, return_local_features=False):
+    def forward(self, img_batch, annotations, verb, roles, widths, heights, epoch_num, detach_resnet=False, use_gt_nouns=False, use_gt_verb=False, return_local_features=False):
 
         batch_size = img_batch.shape[0]
 
@@ -262,7 +313,6 @@ class ResNet_RetinaNet_RNN(nn.Module):
             x4 = self.layer4(x3)
 
         image_predict = self.avgpool(x4).squeeze()
-        verb_word = self.verb_embeding(verb.long())
 
         # Get feature pyramid
         features = self.fpn(x2, x3, x4)
@@ -270,9 +320,9 @@ class ResNet_RetinaNet_RNN(nn.Module):
         features.pop(0)  # SARAH - remove feature batch
 
         # init LSTM inputs
-        hx, cx = torch.zeros(batch_size, self.hidden_size).cuda(), torch.zeros(batch_size, self.hidden_size).cuda()
+        '''hx, cx = torch.zeros(batch_size, self.hidden_size).cuda(), torch.zeros(batch_size, self.hidden_size).cuda()
         previous_word = torch.zeros(batch_size, 512).cuda(x.device)
-        roi_features = torch.zeros(batch_size, 2048).cuda(x.device)
+        roi_features = torch.zeros(batch_size, 2048).cuda(x.device)'''
 
         # init losses
         all_class_loss = 0
@@ -293,13 +343,38 @@ class ResNet_RetinaNet_RNN(nn.Module):
         if return_local_features:
             local_features = []
 
-        for i in range(6):
-            rnn_input = torch.cat((image_predict, verb_word, previous_word, roi_features), dim=1)
-            hx, cx = self.rnn(rnn_input, (hx, cx))
-            rnn_output = self.rnn_linear(hx)
-            just_rnn = [rnn_output.view(batch_size, 256, 1, 1).expand((batch_size, 256, f.shape[2], f.shape[3])) for f in features]
+        verb_embd = self.verb_embeding(verb.long())
+        img_org = features[-1].view(batch_size, -1, 6* 6)
+        v = img_org.permute(0, 2, 1)
 
-            bbox_exist, regression, classification, top_class_per_box = self.class_and_reg_branch(batch_size, rnn_output, features, just_rnn)
+        for i in range(6):
+
+
+            role_embd = self.role_embedding(roles[i])
+
+            concat_query = torch.cat([ verb_embd, role_embd], -1)
+            q_emb = self.query_composer(concat_query)
+
+            att = self.v_att(v, q_emb)
+            v_emb = (att * v).sum(1)
+
+            v_repr = self.v_net(v_emb)
+            q_repr = self.q_net(q_emb)
+
+            mfb_iq_eltwise = torch.mul(q_repr, v_repr)
+
+            mfb_iq_drop = self.Dropout_C(mfb_iq_eltwise)
+
+            mfb_iq_resh = mfb_iq_drop.view(batch_size* self.encoder.max_role_count, 1, -1, 1)   # N x 1 x 1000 x n_heads # we go with 1
+            mfb_iq_sumpool = torch.sum(mfb_iq_resh, 3, keepdim=True)    # N x 1 x 1000 x 1
+            mfb_out = torch.squeeze(mfb_iq_sumpool)                     # N x 1000
+            mfb_sign_sqrt = torch.sqrt(F.relu(mfb_out)) - torch.sqrt(F.relu(-mfb_out))
+            mfb_l2 = F.normalize(mfb_sign_sqrt)
+            tda_out = mfb_l2
+
+            tda_all = [tda_out.view(batch_size, 256, 1, 1).expand((batch_size, 256, f.shape[2], f.shape[3])) for f in features]
+
+            bbox_exist, regression, classification, top_class_per_box = self.class_and_reg_branch(batch_size, tda_out, features, tda_all)
 
             if self.training and use_gt_nouns:
                 previous_boxes = annotations[:, i, :4]
@@ -311,26 +386,17 @@ class ResNet_RetinaNet_RNN(nn.Module):
                 previous_boxes[bbox_exist < 0] = -1
 
             roi_features = self.get_local_features(x4, previous_boxes, img_batch.shape[2], img_batch.shape[3])
-            noun_pred = torch.cat((roi_features, rnn_output), dim=1)
+            noun_pred = torch.cat((roi_features, tda_out), dim=1)
             noun_pred = self.vocab_linear(noun_pred)
             noun_pred = self.vocab_linear_2(self.relu(noun_pred))
             classification_guess = torch.argmax(noun_pred, dim=1)
 
-            if return_local_features:
-                local_features.append(roi_features)
 
             if self.training:
                 for noun_index in range(4, 7):
                     noun_gt = annotations[torch.arange(batch_size), i, noun_index]
                     noun_loss += self.loss_function(noun_pred, noun_gt.squeeze().long().cuda())
 
-            if self.training and use_gt_nouns:
-                ground_truth_1 = self.noun_embedding(annotations[:, i, 4].long())
-                ground_truth_2 = self.noun_embedding(annotations[:, i, 5].long())
-                ground_truth_3 = self.noun_embedding(annotations[:, i, 6].long())
-                previous_word = torch.stack([ground_truth_1, ground_truth_2, ground_truth_3]).mean(dim=0)
-            else:
-                previous_word = self.noun_embedding(classification_guess)
 
             if self.training:
                 class_list.append(classification)
@@ -340,6 +406,8 @@ class ResNet_RetinaNet_RNN(nn.Module):
                 bbox_predicts.append(previous_boxes)
                 noun_predicts.append(classification_guess)
                 bbox_exist_list.append(bbox_exist)
+
+
 
         if return_local_features:
             all_local_features = torch.stack(local_features).transpose(0,1)

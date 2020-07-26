@@ -150,10 +150,11 @@ def train(retinanet, optimizer, dataloader_train, parser, epoch_num, writer):
         image = data['img'].cuda().float()
         annotations = data['annot'].cuda().float()
         verbs = data['verb_idx'].cuda()
+        roles = data['role_idx'].cuda()
         widths = data['widths'].cuda()
         heights = data['heights'].cuda()
 
-        class_loss, reg_loss, bbox_loss, all_noun_loss = retinanet(image, annotations, verbs, widths, heights, epoch_num, deatch_resnet, use_gt_nouns)
+        class_loss, reg_loss, bbox_loss, all_noun_loss = retinanet(image, annotations, verbs, roles, widths, heights, epoch_num, deatch_resnet, use_gt_nouns)
 
         avg_class_loss += class_loss.mean().item()
         avg_reg_loss += reg_loss.mean().item()
@@ -201,6 +202,7 @@ def evaluate(retinanet, dataloader_val, parser, dataset_val, dataset_train, verb
         k += 1
         x = data['img'].cuda().float()
         y = data['verb_idx'].cuda()
+        roles = data['role_idx'].cuda()
         widths = data['widths'].cuda()
         heights = data['heights'].cuda()
         annotations = data['annot'].cuda().float()
@@ -208,7 +210,7 @@ def evaluate(retinanet, dataloader_val, parser, dataset_val, dataset_train, verb
         shift_0 = data['shift_0']
 
         with torch.no_grad():
-            verb_guess, noun_predicts, bbox_predicts, bbox_exists = retinanet(x, annotations, y, widths, heights, epoch_num, use_gt_verb=True)
+            verb_guess, noun_predicts, bbox_predicts, bbox_exists = retinanet(x, annotations, y, roles, widths, heights, epoch_num, use_gt_verb=True)
         for i in range(len(verb_guess)):
             image = data['img_name'][i].split('/')[-1]
             verb = dataset_train.idx_to_verb[verb_guess[i]]
