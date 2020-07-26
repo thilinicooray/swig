@@ -353,7 +353,7 @@ class ResNet_RetinaNet_RNN(nn.Module):
         v = img_org.permute(0, 2, 1)
 
         for i in range(6):
-
+            print('roles ', roles, roles[i], verb_embd.size())
 
             role_embd = self.role_embedding(roles[i])
 
