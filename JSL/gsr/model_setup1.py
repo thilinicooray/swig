@@ -218,19 +218,16 @@ class ResNet_RetinaNet_RNN(nn.Module):
 
         # init embeddings
         self.verb_embeding = nn.Embedding(504, 256)
+        self.role_embedding = nn.Embedding(504, 256)
         self.noun_embedding = nn.Embedding(num_nouns, 512)
 
         self.regressionModel = RegressionModel(768)
         self.classificationModel = ClassificationModel(768, num_classes=num_classes, feature_size=256)
 
-        # init rnn and rnn weights
-        self.rnn = nn.LSTMCell(4864, self.hidden_size)
-
-        for name, param in self.rnn.named_parameters():
-            if 'weight' in name:
-                nn.init.orthogonal_(param)
-
-        self.rnn_linear = nn.Linear(self.hidden_size, 256)
+        self.query_composer = FCNet([512, 256])
+        v_att = Attention(img_embedding_size, 256, 256)
+        q_net = FCNet([256, 256 ])
+        v_net = FCNet([img_embedding_size, 256])
 
         # fill class/reg branches with weights
         prior = 0.01
@@ -272,8 +269,6 @@ class ResNet_RetinaNet_RNN(nn.Module):
         anchors = self.anchors(img_batch)
         features.pop(0)  # SARAH - remove feature batch
 
-        print('feature size '. features.size(), image_predict.size(), x4.size())
-
         # init LSTM inputs
         hx, cx = torch.zeros(batch_size, self.hidden_size).cuda(), torch.zeros(batch_size, self.hidden_size).cuda()
         previous_word = torch.zeros(batch_size, 512).cuda(x.device)
@@ -302,11 +297,7 @@ class ResNet_RetinaNet_RNN(nn.Module):
             rnn_input = torch.cat((image_predict, verb_word, previous_word, roi_features), dim=1)
             hx, cx = self.rnn(rnn_input, (hx, cx))
             rnn_output = self.rnn_linear(hx)
-
-            print('rnn out ', rnn_output.size())
             just_rnn = [rnn_output.view(batch_size, 256, 1, 1).expand((batch_size, 256, f.shape[2], f.shape[3])) for f in features]
-
-            print('just rnn ', just_rnn[0].size())
 
             bbox_exist, regression, classification, top_class_per_box = self.class_and_reg_branch(batch_size, rnn_output, features, just_rnn)
 
