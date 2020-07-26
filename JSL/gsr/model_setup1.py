@@ -269,7 +269,8 @@ class ResNet_RetinaNet_RNN(nn.Module):
 
         # init embeddings
         self.verb_embeding = nn.Embedding(504, 256)
-        self.role_embedding = nn.Embedding(504, 256)
+        self.role_embedding = nn.Embedding(191, 256)
+        self.vrole_combo_embedding = nn.Embedding(1789, 256)
         self.noun_embedding = nn.Embedding(num_nouns, 512)
 
         self.regressionModel = RegressionModel(768)
@@ -302,7 +303,7 @@ class ResNet_RetinaNet_RNN(nn.Module):
         x = self.maxpool(x)
         x1 = self.layer1(x)
 
-        if detach_resnet:
+        '''if detach_resnet:
             with torch.no_grad():
                 x2 = self.layer2(x1)
                 x3 = self.layer3(x2)
@@ -310,7 +311,11 @@ class ResNet_RetinaNet_RNN(nn.Module):
         else:
             x2 = self.layer2(x1)
             x3 = self.layer3(x2)
-            x4 = self.layer4(x3)
+            x4 = self.layer4(x3)'''
+        x2 = self.layer2(x1)
+        x3 = self.layer3(x2)
+        x4 = self.layer4(x3)
+
 
         image_predict = self.avgpool(x4).squeeze()
 

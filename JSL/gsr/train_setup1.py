@@ -68,21 +68,30 @@ def main(args=None):
     utils.set_trainable(retinanet.vocab_linear, True)
     utils.set_trainable(retinanet.vocab_linear_2, True)
     utils.set_trainable(retinanet.verb_embeding, True)
+    utils.set_trainable(retinanet.role_embedding, True)
+    utils.set_trainable(retinanet.vrole_combo_embedding, True)
+    utils.set_trainable(retinanet.query_composer, True)
+    utils.set_trainable(retinanet.v_att, True)
+    utils.set_trainable(retinanet.q_net, True)
+    utils.set_trainable(retinanet.v_net, True)
     utils.set_trainable(retinanet.noun_embedding, True)
     utils.set_trainable(retinanet.regressionModel, True)
     utils.set_trainable(retinanet.classificationModel, True)
-    utils.set_trainable(retinanet.rnn, True)
-    utils.set_trainable(retinanet.rnn_linear, True)
+
 
     optimizer = torch.optim.Adamax([
         {'params': retinanet.vocab_linear.parameters()},
         {'params': retinanet.vocab_linear_2.parameters()},
         {'params': retinanet.verb_embeding.parameters()},
+        {'params': retinanet.role_embedding.parameters()},
+        {'params': retinanet.vrole_combo_embedding.parameters()},
+        {'params': retinanet.query_composer.parameters()},
+        {'params': retinanet.v_att.parameters()},
+        {'params': retinanet.q_net.parameters()},
+        {'params': retinanet.v_net.parameters()},
         {'params': retinanet.noun_embedding.parameters()},
         {'params': retinanet.regressionModel.parameters()},
         {'params': retinanet.classificationModel.parameters()},
-        {'params': retinanet.rnn.parameters()},
-        {'params': retinanet.rnn_linear.parameters()},
     ], lr=1e-3)
 
     scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9)
@@ -91,11 +100,6 @@ def main(args=None):
 
     #retinanet = torch.nn.DataParallel(retinanet).cuda()
     retinanet = retinanet.cuda()
-
-
-
-
-
 
     #optimizer = optim.Adam(retinanet.parameters(), lr=parser.lr)
 
@@ -110,6 +114,7 @@ def main(args=None):
         eval_avg = evaluate(retinanet, dataloader_val, parser, dataset_val, dataset_train, verb_orders, dev_gt, epoch_num, writer, noun_dict)
 
         if eval_avg > best_eval:
+            best_eval = eval_avg
             print('New best model at epoch ', epoch_num)
 
         scheduler.step()
@@ -126,7 +131,7 @@ def train(retinanet, optimizer, dataloader_train, parser, epoch_num, writer):
     avg_noun_loss = 0.0
 
     retinanet.training = True
-    deatch_resnet = parser.detach_epoch > epoch_num
+    '''deatch_resnet = parser.detach_epoch > epoch_num
     use_gt_nouns = parser.gt_noun_epoch > epoch_num
 
     if epoch_num == parser.lr_decrease:
@@ -137,9 +142,9 @@ def train(retinanet, optimizer, dataloader_train, parser, epoch_num, writer):
     if epoch_num == parser.second_lr_decrease:
         lr = parser.lr / 100
         for param_group in optimizer.param_groups:
-            param_group["lr"] = lr
+            param_group["lr"] = lr'''
 
-    if use_gt_nouns:
+    if True:
         print("Using gt nouns")
     else:
         print("Not using gt nouns")
@@ -154,7 +159,7 @@ def train(retinanet, optimizer, dataloader_train, parser, epoch_num, writer):
         widths = data['widths'].cuda()
         heights = data['heights'].cuda()
 
-        class_loss, reg_loss, bbox_loss, all_noun_loss = retinanet(image, annotations, verbs, roles, widths, heights, epoch_num, deatch_resnet, use_gt_nouns)
+        class_loss, reg_loss, bbox_loss, all_noun_loss = retinanet(image, annotations, verbs, roles, widths, heights, epoch_num, True, False)
 
         avg_class_loss += class_loss.mean().item()
         avg_reg_loss += reg_loss.mean().item()
