@@ -171,7 +171,7 @@ class CSVDataset(Dataset):
         img = self.load_image(idx)
         if self.inference:
             verb_idx = self.inference_verbs[self.image_names[idx]]
-            role_idx = self.roleidx_by_verb[self.idx_to_verb[verb_idx]]
+            role_idx = self.vrole_combo_idx_by_verb[self.idx_to_verb[verb_idx]]
             annot = self.make_dummy_annot()
             sample = {'img': img, 'annot': annot, 'img_name': self.image_names[idx], 'verb_idx': verb_idx, 'role_idx': role_idx}
             if self.transform:
@@ -183,7 +183,7 @@ class CSVDataset(Dataset):
         verb = verb.split('_')[0]
 
         verb_idx = self.verb_to_idx[verb]
-        role_idx = self.roleidx_by_verb[verb]
+        role_idx = self.vrole_combo_idx_by_verb[verb]
         sample = {'img': img, 'annot': annot, 'img_name': self.image_names[idx], 'verb_idx': verb_idx, 'role_idx': role_idx}
         if self.transform:
             sample = self.transform(sample)
