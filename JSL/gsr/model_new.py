@@ -272,7 +272,7 @@ class ResNet_RetinaNet_RNN(nn.Module):
         anchors = self.anchors(img_batch)
         features.pop(0)  # SARAH - remove feature batch
 
-        #print('feature size ', features.size(), image_predict.size(), x4.size())
+        print('feature size ', features[-1].size(), image_predict.size(), x4.size())
 
         # init LSTM inputs
         hx, cx = torch.zeros(batch_size, self.hidden_size).cuda(), torch.zeros(batch_size, self.hidden_size).cuda()
@@ -303,10 +303,10 @@ class ResNet_RetinaNet_RNN(nn.Module):
             hx, cx = self.rnn(rnn_input, (hx, cx))
             rnn_output = self.rnn_linear(hx)
 
-            #print('rnn out ', rnn_output.size())
+            print('rnn out ', rnn_output.size())
             just_rnn = [rnn_output.view(batch_size, 256, 1, 1).expand((batch_size, 256, f.shape[2], f.shape[3])) for f in features]
 
-            #print('just rnn ', just_rnn[0].size())
+            print('just rnn ', just_rnn[0].size())
 
             bbox_exist, regression, classification, top_class_per_box = self.class_and_reg_branch(batch_size, rnn_output, features, just_rnn)
 
