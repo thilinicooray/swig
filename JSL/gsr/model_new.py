@@ -272,7 +272,7 @@ class ResNet_RetinaNet_RNN(nn.Module):
         anchors = self.anchors(img_batch)
         features.pop(0)  # SARAH - remove feature batch
 
-        print('feature size '. features.size(), image_predict.size(), x4.size())
+        print('feature size ', features.size(), image_predict.size(), x4.size())
 
         # init LSTM inputs
         hx, cx = torch.zeros(batch_size, self.hidden_size).cuda(), torch.zeros(batch_size, self.hidden_size).cuda()
