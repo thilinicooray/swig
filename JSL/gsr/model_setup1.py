@@ -291,6 +291,8 @@ class ResNet_RetinaNet_RNN(nn.Module):
         self.freeze_bn()
         self.verb_loss_function = nn.CrossEntropyLoss()
 
+        self.Dropout_C = nn.Dropout(0.1)
+
 
     def forward(self, img_batch, annotations, verb, roles, widths, heights, epoch_num, detach_resnet=False, use_gt_nouns=False, use_gt_verb=False, return_local_features=False):
 
@@ -353,7 +355,6 @@ class ResNet_RetinaNet_RNN(nn.Module):
         v = img_org.permute(0, 2, 1)
 
         for i in range(6):
-            print('roles ', roles, roles.size(), roles[:,i], verb_embd.size())
 
             role_embd = self.role_embedding(roles[:,i])
 
