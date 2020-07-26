@@ -356,7 +356,7 @@ class ResNet_RetinaNet_RNN(nn.Module):
 
         for i in range(6):
 
-            role_embd = self.role_embedding(roles[:,i])
+            role_embd = self.vrole_combo_embedding(roles[:,i])
 
             concat_query = torch.cat([ verb_embd, role_embd], -1)
             q_emb = self.query_composer(concat_query)
