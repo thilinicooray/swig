@@ -260,7 +260,7 @@ def init_data(parser, verb_orders):
                                  transform=transforms.Compose([Normalizer(), Resizer(False)]))
 
     sampler = AspectRatioBasedSampler(dataset_train, batch_size=parser.batch_size, drop_last=True)
-    dataloader_train = DataLoader(dataset_train, num_workers=64, collate_fn=collater, batch_sampler=sampler)
+    dataloader_train = DataLoader(dataset_train, num_workers=1, collate_fn=collater, batch_sampler=sampler)
 
     if dataset_val is not None:
         sampler_val = AspectRatioBasedSampler(dataset_val, batch_size=parser.batch_size, drop_last=True)
