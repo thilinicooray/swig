@@ -353,9 +353,9 @@ class ResNet_RetinaNet_RNN(nn.Module):
         v = img_org.permute(0, 2, 1)
 
         for i in range(6):
-            print('roles ', roles, roles[i], verb_embd.size())
+            print('roles ', roles, roles.size(), roles[:,i], verb_embd.size())
 
-            role_embd = self.role_embedding(roles[i])
+            role_embd = self.role_embedding(roles[:,i])
 
             concat_query = torch.cat([ verb_embd, role_embd], -1)
             q_emb = self.query_composer(concat_query)
