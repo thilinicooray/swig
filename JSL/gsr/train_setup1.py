@@ -92,9 +92,9 @@ def main(args=None):
         {'params': retinanet.noun_embedding.parameters()},
         {'params': retinanet.regressionModel.parameters()},
         {'params': retinanet.classificationModel.parameters()},
-    ], lr=1e-3)
+    ], lr=0.0006)
 
-    scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9)
+    #scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9)
 
 
 
@@ -117,7 +117,7 @@ def main(args=None):
             best_eval = eval_avg
             print('New best model at epoch ', epoch_num)
 
-        scheduler.step()
+        #scheduler.step()
 
 
 def train(retinanet, optimizer, dataloader_train, parser, epoch_num, writer):
@@ -131,7 +131,7 @@ def train(retinanet, optimizer, dataloader_train, parser, epoch_num, writer):
     avg_noun_loss = 0.0
 
     retinanet.training = True
-    '''deatch_resnet = parser.detach_epoch > epoch_num
+    deatch_resnet = parser.detach_epoch > epoch_num
     use_gt_nouns = parser.gt_noun_epoch > epoch_num
 
     if epoch_num == parser.lr_decrease:
@@ -142,7 +142,7 @@ def train(retinanet, optimizer, dataloader_train, parser, epoch_num, writer):
     if epoch_num == parser.second_lr_decrease:
         lr = parser.lr / 100
         for param_group in optimizer.param_groups:
-            param_group["lr"] = lr'''
+            param_group["lr"] = lr
 
     if True:
         print("Using gt nouns")
