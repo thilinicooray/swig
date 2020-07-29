@@ -277,9 +277,9 @@ class ResNet_RetinaNet_RNN(nn.Module):
         self.classificationModel = ClassificationModel(768, num_classes=num_classes, feature_size=256)
 
         self.query_composer = FCNet([512, 256])
-        self.v_att = Attention(256, 256, 256)
+        self.v_att = Attention(2048, 256, 256)
         self.q_net = FCNet([256, 256 ])
-        self.v_net = FCNet([256, 256])
+        self.v_net = FCNet([2048, 256])
 
         # fill class/reg branches with weights
         prior = 0.01
@@ -351,7 +351,7 @@ class ResNet_RetinaNet_RNN(nn.Module):
             local_features = []
 
         verb_embd = self.verb_embeding(verb.long())
-        img_org = features[-1].view(batch_size, -1, 6* 6)
+        img_org = x4.view(batch_size, 2048, -1)
         v = img_org.permute(0, 2, 1)
 
         for i in range(6):
