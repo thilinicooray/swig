@@ -74,6 +74,8 @@ def main(args=None):
     utils.set_trainable(retinanet.v_att, True)
     utils.set_trainable(retinanet.q_net, True)
     utils.set_trainable(retinanet.v_net, True)
+    utils.set_trainable(retinanet.rnn, True)
+    utils.set_trainable(retinanet.rnn_linear, True)
     utils.set_trainable(retinanet.noun_embedding, True)
     utils.set_trainable(retinanet.regressionModel, True)
     utils.set_trainable(retinanet.classificationModel, True)
@@ -89,6 +91,8 @@ def main(args=None):
         {'params': retinanet.v_att.parameters()},
         {'params': retinanet.q_net.parameters()},
         {'params': retinanet.v_net.parameters()},
+        {'params': retinanet.rnn.parameters()},
+        {'params': retinanet.rnn_linear.parameters()},
         {'params': retinanet.noun_embedding.parameters()},
         {'params': retinanet.regressionModel.parameters()},
         {'params': retinanet.classificationModel.parameters()},

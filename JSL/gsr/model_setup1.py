@@ -278,8 +278,16 @@ class ResNet_RetinaNet_RNN(nn.Module):
 
         self.query_composer = FCNet([512, 256])
         self.v_att = Attention(2048, 256, 256)
-        self.q_net = FCNet([256, 256 ])
-        self.v_net = FCNet([2048, 256])
+        self.q_net = FCNet([256, 512 ])
+        self.v_net = FCNet([2048, 512])
+
+        self.rnn = nn.LSTMCell(512 + 512+ 2048, self.hidden_size)
+
+        for name, param in self.rnn.named_parameters():
+            if 'weight' in name:
+                nn.init.orthogonal_(param)
+
+        self.rnn_linear = nn.Linear(self.hidden_size, 256)
 
         # fill class/reg branches with weights
         prior = 0.01
@@ -327,9 +335,9 @@ class ResNet_RetinaNet_RNN(nn.Module):
         features.pop(0)  # SARAH - remove feature batch
 
         # init LSTM inputs
-        '''hx, cx = torch.zeros(batch_size, self.hidden_size).cuda(), torch.zeros(batch_size, self.hidden_size).cuda()
+        hx, cx = torch.zeros(batch_size, self.hidden_size).cuda(), torch.zeros(batch_size, self.hidden_size).cuda()
         previous_word = torch.zeros(batch_size, 512).cuda(x.device)
-        roi_features = torch.zeros(batch_size, 2048).cuda(x.device)'''
+        roi_features = torch.zeros(batch_size, 2048).cuda(x.device)
 
         # init losses
         all_class_loss = 0
@@ -378,9 +386,13 @@ class ResNet_RetinaNet_RNN(nn.Module):
             mfb_l2 = F.normalize(mfb_sign_sqrt)
             tda_out = mfb_l2
 
-            tda_all = [tda_out.view(batch_size, 256, 1, 1).expand((batch_size, 256, f.shape[2], f.shape[3])) for f in features]
 
-            bbox_exist, regression, classification, top_class_per_box = self.class_and_reg_branch(batch_size, tda_out, features, tda_all)
+            rnn_input = torch.cat((tda_out, previous_word, roi_features), dim=1)
+            hx, cx = self.rnn(rnn_input, (hx, cx))
+            rnn_output = self.rnn_linear(hx)
+            just_rnn = [rnn_output.view(batch_size, 256, 1, 1).expand((batch_size, 256, f.shape[2], f.shape[3])) for f in features]
+
+            bbox_exist, regression, classification, top_class_per_box = self.class_and_reg_branch(batch_size, rnn_output, features, just_rnn)
 
             if self.training and use_gt_nouns:
                 previous_boxes = annotations[:, i, :4]
@@ -392,17 +404,26 @@ class ResNet_RetinaNet_RNN(nn.Module):
                 previous_boxes[bbox_exist < 0] = -1
 
             roi_features = self.get_local_features(x4, previous_boxes, img_batch.shape[2], img_batch.shape[3])
-            noun_pred = torch.cat((roi_features, tda_out), dim=1)
+            noun_pred = torch.cat((roi_features, rnn_output), dim=1)
             noun_pred = self.vocab_linear(noun_pred)
             noun_pred = self.vocab_linear_2(self.relu(noun_pred))
             classification_guess = torch.argmax(noun_pred, dim=1)
 
+            if return_local_features:
+                local_features.append(roi_features)
 
             if self.training:
                 for noun_index in range(4, 7):
                     noun_gt = annotations[torch.arange(batch_size), i, noun_index]
                     noun_loss += self.loss_function(noun_pred, noun_gt.squeeze().long().cuda())
 
+            if self.training and use_gt_nouns:
+                ground_truth_1 = self.noun_embedding(annotations[:, i, 4].long())
+                ground_truth_2 = self.noun_embedding(annotations[:, i, 5].long())
+                ground_truth_3 = self.noun_embedding(annotations[:, i, 6].long())
+                previous_word = torch.stack([ground_truth_1, ground_truth_2, ground_truth_3]).mean(dim=0)
+            else:
+                previous_word = self.noun_embedding(classification_guess)
 
             if self.training:
                 class_list.append(classification)
@@ -412,8 +433,6 @@ class ResNet_RetinaNet_RNN(nn.Module):
                 bbox_predicts.append(previous_boxes)
                 noun_predicts.append(classification_guess)
                 bbox_exist_list.append(bbox_exist)
-
-
 
         if return_local_features:
             all_local_features = torch.stack(local_features).transpose(0,1)
