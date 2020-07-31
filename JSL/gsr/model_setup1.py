@@ -281,7 +281,7 @@ class ResNet_RetinaNet_RNN(nn.Module):
         self.q_net = FCNet([256, 512 ])
         self.v_net = FCNet([2048, 512])
 
-        self.rnn = nn.LSTMCell(512 + 512+ 2048, self.hidden_size)
+        self.rnn = nn.LSTMCell(2048 + 256+ 256 + 512+ 2048, self.hidden_size)
 
         for name, param in self.rnn.named_parameters():
             if 'weight' in name:
@@ -366,7 +366,7 @@ class ResNet_RetinaNet_RNN(nn.Module):
 
             role_embd = self.vrole_combo_embedding(roles[:,i])
 
-            concat_query = torch.cat([ verb_embd, role_embd], -1)
+            '''concat_query = torch.cat([ verb_embd, role_embd], -1)
             q_emb = self.query_composer(concat_query)
 
             att = self.v_att(v, q_emb)
@@ -384,10 +384,10 @@ class ResNet_RetinaNet_RNN(nn.Module):
             mfb_out = torch.squeeze(mfb_iq_sumpool)                     # N x 1000
             mfb_sign_sqrt = torch.sqrt(F.relu(mfb_out)) - torch.sqrt(F.relu(-mfb_out))
             mfb_l2 = F.normalize(mfb_sign_sqrt)
-            tda_out = mfb_l2
+            tda_out = mfb_l2'''
 
 
-            rnn_input = torch.cat((tda_out, previous_word, roi_features), dim=1)
+            rnn_input = torch.cat((image_predict, verb_embd, role_embd, previous_word, roi_features), dim=1)
             hx, cx = self.rnn(rnn_input, (hx, cx))
             rnn_output = self.rnn_linear(hx)
             just_rnn = [rnn_output.view(batch_size, 256, 1, 1).expand((batch_size, 256, f.shape[2], f.shape[3])) for f in features]
