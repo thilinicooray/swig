@@ -96,9 +96,9 @@ def main(args=None):
         {'params': retinanet.noun_embedding.parameters()},
         {'params': retinanet.regressionModel.parameters()},
         {'params': retinanet.classificationModel.parameters()},
-    ], lr=0.0006)
+    ], lr=0.0005)
 
-    #scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9)
+    scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9)
 
 
 
@@ -106,8 +106,6 @@ def main(args=None):
     retinanet = retinanet.cuda()
 
     #optimizer = optim.Adam(retinanet.parameters(), lr=parser.lr)
-
-    print('weights loaded')
 
     best_eval = 0
 
@@ -121,7 +119,7 @@ def main(args=None):
             best_eval = eval_avg
             print('New best model at epoch ', epoch_num)
 
-        #scheduler.step()
+        scheduler.step()
 
 
 def train(retinanet, optimizer, dataloader_train, parser, epoch_num, writer):
