@@ -96,7 +96,7 @@ def main(args=None):
         {'params': retinanet.noun_embedding.parameters()},
         {'params': retinanet.regressionModel.parameters()},
         {'params': retinanet.classificationModel.parameters()},
-    ], lr=1e-3)
+    ], lr=0.0006)
 
     #scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9)
 
