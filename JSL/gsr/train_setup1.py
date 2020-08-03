@@ -94,11 +94,11 @@ def main(args=None):
         {'params': retinanet.rnn.parameters()},
         {'params': retinanet.rnn_linear.parameters()},
         {'params': retinanet.noun_embedding.parameters()},
-        {'params': retinanet.regressionModel.parameters()},
-        {'params': retinanet.classificationModel.parameters()},
-    ], lr=0.0005)
+        {'params': retinanet.regressionModel.parameters(), 'lr': 5e-4},
+        {'params': retinanet.classificationModel.parameters(), 'lr': 5e-4},
+    ], lr=1e-3)
 
-    scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9)
+    #scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9)
 
 
 
@@ -119,7 +119,7 @@ def main(args=None):
             best_eval = eval_avg
             print('New best model at epoch ', epoch_num)
 
-        scheduler.step()
+        #scheduler.step()
 
 
 def train(retinanet, optimizer, dataloader_train, parser, epoch_num, writer):
