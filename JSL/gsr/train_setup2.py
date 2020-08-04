@@ -120,20 +120,6 @@ def train(retinanet, optimizer, dataloader_train, parser, epoch_num, writer):
     deatch_resnet = parser.detach_epoch > epoch_num
     use_gt_nouns = parser.gt_noun_epoch > epoch_num
 
-    if epoch_num == parser.lr_decrease:
-        lr = parser.lr / 10
-        for param_group in optimizer.param_groups:
-            param_group["lr"] = lr
-
-    if epoch_num == parser.second_lr_decrease:
-        lr = parser.lr / 100
-        for param_group in optimizer.param_groups:
-            param_group["lr"] = lr
-
-    if True:
-        print("Using gt nouns")
-    else:
-        print("Not using gt nouns")
 
     for iter_num, data in enumerate(dataloader_train):
         i += 1
