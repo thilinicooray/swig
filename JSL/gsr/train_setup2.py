@@ -101,6 +101,7 @@ def main(args=None):
 
         if eval_avg > best_eval:
             best_eval = eval_avg
+            torch.save({'state_dict': retinanet.module.state_dict(), 'optimizer': optimizer.state_dict()}, log_dir + '/checkpoints/retinanet_tdaonly_best.pth')
             print('New best model at epoch ', epoch_num)
 
         scheduler.step()
@@ -164,7 +165,8 @@ def train(retinanet, optimizer, dataloader_train, parser, epoch_num, writer):
         if bool(loss == 0):
             continue
         loss.backward()
-        torch.nn.utils.clip_grad_norm_(retinanet.parameters(), 0.25)
+        #torch.nn.utils.clip_grad_norm_(retinanet.parameters(), 0.25)
+        torch.nn.utils.clip_grad_norm_(retinanet.parameters(), 1, norm_type="inf")
         optimizer.step()
         #break
 
