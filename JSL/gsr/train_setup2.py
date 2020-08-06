@@ -67,12 +67,12 @@ def main(args=None):
     utils.set_trainable(retinanet, True)
 
     optimizer = torch.optim.Adamax([
-        {'params': retinanet.conv1.parameters(), 'lr': 5e-4},
-        {'params': retinanet.bn1.parameters(), 'lr': 5e-4},
-        {'params': retinanet.layer1.parameters(), 'lr': 5e-4},
-        {'params': retinanet.layer2.parameters(), 'lr': 5e-4},
-        {'params': retinanet.layer3.parameters(), 'lr': 5e-4},
-        {'params': retinanet.layer4.parameters(), 'lr': 5e-4},
+        {'params': retinanet.conv1.parameters(), 'lr': 1e-4},
+        {'params': retinanet.bn1.parameters(), 'lr': 1e-4},
+        {'params': retinanet.layer1.parameters(), 'lr': 1e-4},
+        {'params': retinanet.layer2.parameters(), 'lr': 1e-4},
+        {'params': retinanet.layer3.parameters(), 'lr': 1e-4},
+        {'params': retinanet.layer4.parameters(), 'lr': 1e-4},
         {'params': retinanet.verb_embeding.parameters()},
         {'params': retinanet.vrole_combo_embedding.parameters()},
         {'params': retinanet.query_composer.parameters()},
