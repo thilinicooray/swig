@@ -314,7 +314,7 @@ class ResNet_RetinaNet_RNN(nn.Module):
         #self.classificationModel.output_retina.bias.data.fill_(-math.log((1.0 - prior) / prior))
         #self.regressionModel.output.weight.data.fill_(0)
         #self.regressionModel.output.bias.data.fill_(0)
-        #self.freeze_bn()
+        self.freeze_bn()
         self.verb_loss_function = nn.CrossEntropyLoss()
 
         self.Dropout_C = nn.Dropout(0.1)

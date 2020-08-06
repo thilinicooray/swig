@@ -86,7 +86,7 @@ def main(args=None):
 
 
 
-    retinanet = torch.nn.DataParallel(retinanet).cuda()
+    retinanet = retinanet.cuda()
     #retinanet = retinanet.cuda()
 
     #optimizer = optim.Adam(retinanet.parameters(), lr=parser.lr)
@@ -101,7 +101,7 @@ def main(args=None):
 
         if eval_avg > best_eval:
             best_eval = eval_avg
-            torch.save({'state_dict': retinanet.module.state_dict(), 'optimizer': optimizer.state_dict()}, log_dir + '/checkpoints/retinanet_tdaonly_best.pth')
+            torch.save({'state_dict': retinanet.module.state_dict(), 'optimizer': optimizer.state_dict()}, log_dir + '/checkpoints/retinanet_tdaonly_bnfreeze_best.pth')
             print('New best model at epoch ', epoch_num)
 
         scheduler.step()
@@ -109,7 +109,9 @@ def main(args=None):
 
 def train(retinanet, optimizer, dataloader_train, parser, epoch_num, writer):
     retinanet.train()
-    #retinanet.freeze_bn()
+    retinanet.freeze_bn()
+
+    retinanet = torch.nn.DataParallel(retinanet)
 
     i = 0
     avg_class_loss = 0.0
