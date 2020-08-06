@@ -67,12 +67,12 @@ def main(args=None):
     utils.set_trainable(retinanet, True)
 
     optimizer = torch.optim.Adamax([
-        {'params': retinanet.conv1.parameters(), 'lr': 5e-5},
-        {'params': retinanet.bn1.parameters(), 'lr': 5e-5},
-        {'params': retinanet.layer1.parameters(), 'lr': 5e-5},
-        {'params': retinanet.layer2.parameters(), 'lr': 5e-5},
-        {'params': retinanet.layer3.parameters(), 'lr': 5e-5},
-        {'params': retinanet.layer4.parameters(), 'lr': 5e-5},
+        {'params': retinanet.conv1.parameters(), 'lr': 5e-4},
+        {'params': retinanet.bn1.parameters(), 'lr': 5e-4},
+        {'params': retinanet.layer1.parameters(), 'lr': 5e-4},
+        {'params': retinanet.layer2.parameters(), 'lr': 5e-4},
+        {'params': retinanet.layer3.parameters(), 'lr': 5e-4},
+        {'params': retinanet.layer4.parameters(), 'lr': 5e-4},
         {'params': retinanet.verb_embeding.parameters()},
         {'params': retinanet.vrole_combo_embedding.parameters()},
         {'params': retinanet.query_composer.parameters()},
@@ -86,7 +86,7 @@ def main(args=None):
 
 
 
-    retinanet = retinanet.cuda()
+    retinanet = torch.nn.DataParallel(retinanet).cuda()
     #retinanet = retinanet.cuda()
 
     #optimizer = optim.Adam(retinanet.parameters(), lr=parser.lr)
@@ -109,9 +109,7 @@ def main(args=None):
 
 def train(retinanet, optimizer, dataloader_train, parser, epoch_num, writer):
     retinanet.train()
-    retinanet.freeze_bn()
-
-    retinanet = torch.nn.DataParallel(retinanet)
+    #retinanet.freeze_bn()
 
     i = 0
     avg_class_loss = 0.0
