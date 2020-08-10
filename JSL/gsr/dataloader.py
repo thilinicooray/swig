@@ -125,6 +125,21 @@ class CSVDataset(Dataset):
 
             self.vrole_combo_idx_by_verb[verb] = role_ids
 
+        self.v_adj_idx_by_verb ={}
+
+        for verb, id in self.verb_to_idx.items():
+            order = verb_info[verb]['order']
+
+            role_count = len(order)
+
+            verb_adj = torch.zeros(max_role_count,max_role_count)
+
+            verb_adj[:role_count, :role_count] = 1
+
+            print(verb, role_count, verb_adj)
+
+            self.v_adj_idx_by_verb[verb] = verb_adj
+
 
         self.image_to_image_idx = {}
         i = 0
@@ -172,8 +187,9 @@ class CSVDataset(Dataset):
         if self.inference:
             verb_idx = self.inference_verbs[self.image_names[idx]]
             role_idx = self.vrole_combo_idx_by_verb[self.idx_to_verb[verb_idx]]
+            adj = self.v_adj_idx_by_verb[self.idx_to_verb[verb_idx]]
             annot = self.make_dummy_annot()
-            sample = {'img': img, 'annot': annot, 'img_name': self.image_names[idx], 'verb_idx': verb_idx, 'role_idx': role_idx}
+            sample = {'img': img, 'annot': annot, 'img_name': self.image_names[idx], 'verb_idx': verb_idx, 'role_idx': role_idx, 'adj':adj}
             if self.transform:
                 sample = self.transform(sample)
             return sample
@@ -184,7 +200,8 @@ class CSVDataset(Dataset):
 
         verb_idx = self.verb_to_idx[verb]
         role_idx = self.vrole_combo_idx_by_verb[verb]
-        sample = {'img': img, 'annot': annot, 'img_name': self.image_names[idx], 'verb_idx': verb_idx, 'role_idx': role_idx}
+        adj = self.v_adj_idx_by_verb[verb]
+        sample = {'img': img, 'annot': annot, 'img_name': self.image_names[idx], 'verb_idx': verb_idx, 'role_idx': role_idx, 'adj':adj}
         if self.transform:
             sample = self.transform(sample)
         return sample
@@ -301,6 +318,9 @@ def collater(data):
     role_indices = [s['role_idx'] for s in data]
     role_indices = torch.tensor(role_indices)
 
+    adj = [s['adj'] for s in data]
+    adj = torch.tensor(adj)
+
     widths = [int(s.shape[0]) for s in imgs]
     heights = [int(s.shape[1]) for s in imgs]
 
@@ -331,7 +351,7 @@ def collater(data):
 
     padded_imgs = padded_imgs.permute(0, 3, 1, 2)
 
-    return {'img': padded_imgs, 'annot': annot_padded, 'scale': scales, 'img_name': img_names, 'verb_idx': verb_indices,'role_idx': role_indices,
+    return {'img': padded_imgs, 'annot': annot_padded, 'scale': scales, 'img_name': img_names, 'verb_idx': verb_indices,'role_idx': role_indices, 'adj':adj,
             'widths': torch.tensor(widths).float(), 'heights': torch.tensor(heights).float(), 'shift_0': shift_0, 'shift_1': shift_1}
 
 
@@ -380,7 +400,8 @@ class Resizer(object):
         annots[:, 3][annots[:, 3] > 0] = annots[:, 3][annots[:, 3] > 0] + shift_0
 
 
-        return {'img': torch.from_numpy(new_image), 'annot': torch.from_numpy(annots), 'scale': scale, 'img_name': image_name, 'verb_idx': sample['verb_idx'],'role_idx': sample['role_idx'], 'shift_1': shift_1, 'shift_0': shift_0}
+        return {'img': torch.from_numpy(new_image), 'annot': torch.from_numpy(annots), 'scale': scale, 'img_name': image_name,
+                'verb_idx': sample['verb_idx'],'role_idx': sample['role_idx'], 'adj':sample['adj'], 'shift_1': shift_1, 'shift_0': shift_0}
 
 
 class Augmenter(object):
@@ -401,9 +422,9 @@ class Augmenter(object):
             annots[:, 0][annots[:, 0] > 0] = cols - x2[annots[:, 0] > 0]
             annots[:, 2][annots[:, 2] > 0] = cols - x_tmp[annots[:, 2] > 0]
 
-            sample = {'img': image, 'annot': annots, 'img_name': img_name, 'verb_idx': sample['verb_idx'], 'role_idx': sample['role_idx']}
+            sample = {'img': image, 'annot': annots, 'img_name': img_name, 'verb_idx': sample['verb_idx'], 'role_idx': sample['role_idx'], 'adj': sample['adj']}
 
-        sample = {'img': image, 'annot': annots, 'img_name': img_name, 'verb_idx': sample['verb_idx'], 'role_idx': sample['role_idx']}
+        sample = {'img': image, 'annot': annots, 'img_name': img_name, 'verb_idx': sample['verb_idx'], 'role_idx': sample['role_idx'], 'adj': sample['adj']}
 
         return sample
 
@@ -417,7 +438,8 @@ class Normalizer(object):
     def __call__(self, sample):
         image, annots = sample['img'], sample['annot']
 
-        return {'img': ((image.astype(np.float32) - self.mean) / self.std), 'annot': annots, 'img_name': sample['img_name'], 'verb_idx': sample['verb_idx'], 'role_idx': sample['role_idx']}
+        return {'img': ((image.astype(np.float32) - self.mean) / self.std), 'annot': annots, 'img_name': sample['img_name'],
+                'verb_idx': sample['verb_idx'], 'role_idx': sample['role_idx'],'adj': sample['adj']}
 
 
 
