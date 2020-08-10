@@ -136,6 +136,8 @@ def train(retinanet, optimizer, dataloader_train, parser, epoch_num, writer):
         widths = data['widths'].cuda()
         heights = data['heights'].cuda()
 
+        print('adj size', adj.size())
+
         _, _, _, all_noun_loss = retinanet(image, annotations, verbs, roles, adj, widths, heights, epoch_num, True, False)
 
         avg_class_loss += 0

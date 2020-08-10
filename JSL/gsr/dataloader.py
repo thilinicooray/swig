@@ -317,7 +317,7 @@ def collater(data):
     role_indices = torch.tensor(role_indices)
 
     adj = [s['adj'] for s in data]
-    adj = torch.tensor(adj)
+    adj = torch.stack(adj)
 
     widths = [int(s.shape[0]) for s in imgs]
     heights = [int(s.shape[1]) for s in imgs]
