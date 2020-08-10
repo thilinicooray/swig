@@ -58,11 +58,10 @@ def main(args=None):
         noun_dict = all['nouns']
 
     dataloader_train, dataset_train, dataloader_val, dataset_val = init_data(parser, verb_orders)
-    print("loading model")
     retinanet = model_setup1.resnet50(num_classes=dataset_train.num_classes(), num_nouns=dataset_train.num_nouns(), parser=parser, pretrained=True)
 
 
-    utils.load_net(parser.pretrained_model, [retinanet])
+    utils.load_net(parser.pretrained_sr_model, [retinanet])
 
     print('Loading pretrained Resnet Based SR model finished!')
 
