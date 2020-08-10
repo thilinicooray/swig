@@ -352,8 +352,8 @@ class ResNet_RetinaNet_RNN(nn.Module):
         self.vrole_combo_embedding = nn.Embedding(1789, 256)
         self.noun_embedding = nn.Embedding(num_nouns, 512)
 
-        self.regressionModel = RegressionModel(1536)
-        self.classificationModel = ClassificationModel(1536, num_classes=num_classes, feature_size=256)
+        self.regressionModel = RegressionModel(768)
+        self.classificationModel = ClassificationModel(768, num_classes=num_classes, feature_size=256)
 
         self.query_composer = FCNet([512, 256])
         self.v_att = Attention(2048, 256, 256)
