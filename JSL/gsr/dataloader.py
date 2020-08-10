@@ -136,8 +136,6 @@ class CSVDataset(Dataset):
 
             verb_adj[:role_count, :role_count] = 1
 
-            print(verb, role_count, verb_adj)
-
             self.v_adj_idx_by_verb[verb] = verb_adj
 
 
