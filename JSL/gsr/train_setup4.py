@@ -71,6 +71,7 @@ def main(args=None):
     utils.set_trainable(retinanet.regressionModel, True)
     utils.set_trainable(retinanet.classificationModel, True)
     utils.set_trainable(retinanet.noun_classifier_roi, True)
+    utils.set_trainable(retinanet.gnn_linear, True)
 
 
     optimizer = torch.optim.Adamax([
@@ -78,6 +79,7 @@ def main(args=None):
         {'params': retinanet.regressionModel.parameters()},
         {'params': retinanet.classificationModel.parameters()},
         {'params': retinanet.noun_classifier_roi.parameters()},
+        {'params': retinanet.gnn_linear.parameters()},
     ], lr=1e-3)
 
     #scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9)

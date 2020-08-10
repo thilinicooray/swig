@@ -155,7 +155,7 @@ class Attention(nn.Module):
 
 
 class PyramidFeatures(nn.Module):
-    def __init__(self, C3_size, C4_size, C5_size, feature_size=512):
+    def __init__(self, C3_size, C4_size, C5_size, feature_size=256):
         super(PyramidFeatures, self).__init__()
 
         # upsample C5 to get P5 from the FPN paper
@@ -352,13 +352,15 @@ class ResNet_RetinaNet_RNN(nn.Module):
         self.vrole_combo_embedding = nn.Embedding(1789, 256)
         self.noun_embedding = nn.Embedding(num_nouns, 512)
 
-        self.regressionModel = RegressionModel(768)
-        self.classificationModel = ClassificationModel(768, num_classes=num_classes, feature_size=256)
+        self.regressionModel = RegressionModel(1536)
+        self.classificationModel = ClassificationModel(1536, num_classes=num_classes, feature_size=256)
 
         self.query_composer = FCNet([512, 256])
         self.v_att = Attention(2048, 256, 256)
         self.q_net = FCNet([256, 512 ])
         self.v_net = FCNet([2048, 512])
+
+        self.gnn_linear = nn.Linear(512, 256)
 
         ''''self.rnn = nn.LSTMCell(2048 + 256+ 256 + 512+ 2048, self.hidden_size)
 
@@ -477,9 +479,12 @@ class ResNet_RetinaNet_RNN(nn.Module):
         dependency_incorporated = self.gnn(fused_input, adj)
 
         for idx in range(6):
-            expanded = [dependency_incorporated[:,idx].view(batch_size, 512, 1, 1).expand((batch_size, 512, f.shape[2], f.shape[3])) for f in features]
 
-            bbox_exist, regression, classification, top_class_per_box = self.class_and_reg_branch(batch_size, dependency_incorporated[:,idx], features, expanded)
+            reshaped_depdency_incorporated = self.gnn_linear(dependency_incorporated[:,idx])
+
+            expanded = [reshaped_depdency_incorporated.view(batch_size, 256, 1, 1).expand((batch_size, 256, f.shape[2], f.shape[3])) for f in features]
+
+            bbox_exist, regression, classification, top_class_per_box = self.class_and_reg_branch(batch_size, reshaped_depdency_incorporated, features, expanded)
 
             if self.training and use_gt_nouns:
                 previous_boxes = annotations[:, i, :4]
@@ -491,7 +496,7 @@ class ResNet_RetinaNet_RNN(nn.Module):
                 previous_boxes[bbox_exist < 0] = -1
 
             roi_features = self.get_local_features(x4, previous_boxes, img_batch.shape[2], img_batch.shape[3])
-            noun_pred = torch.cat((roi_features, dependency_incorporated[:,idx]), dim=1)
+            noun_pred = torch.cat((roi_features, reshaped_depdency_incorporated), dim=1)
             noun_pred = self.noun_classifier_roi(noun_pred)
             classification_guess = torch.argmax(noun_pred, dim=1)
 
