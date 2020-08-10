@@ -73,7 +73,7 @@ class GNN(torch.nn.Module):
         for i in range(num_gc_layers):
 
             conv = GCN(dim, dim)
-            bn = torch.nn.BatchNorm1d(dim)
+            bn = torch.nn.BatchNorm1d(6)
 
             self.convs.append(conv)
             self.bns.append(bn)
