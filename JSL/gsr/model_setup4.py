@@ -340,7 +340,7 @@ class ResNet_RetinaNet_RNN(nn.Module):
         #self.vocab_linear_2 = nn.Linear(1024, num_nouns)
 
         self.noun_classifier_roi = SimpleClassifier(
-            512 + 2048, 2 * 512, num_nouns, 0.5)
+            256 + 2048, 2 * 512, num_nouns, 0.5)
 
         self.loss_function = LabelSmoothing(0.2)
 
@@ -543,14 +543,12 @@ class ResNet_RetinaNet_RNN(nn.Module):
 
     def class_and_reg_branch(self, batch_size, sr_output, features, sr_out_list):
 
-        #print('sizes ', rnn_output.size(), features[0].shape, just_rnn.size())
 
         sr_feature_mult = [sr_output.view(batch_size, 256, 1, 1).expand(feature.shape) * feature for feature in
                             features]
         sr_feature_shapes = [torch.cat([sr_out_list[ii], features[ii], sr_feature_mult[ii]], dim=1) for ii in
                               range(len(features))]
 
-        print('in size for cls and reg branch ', sr_feature_shapes[0].size())
 
         regression = torch.cat([self.regressionModel(sr_feature_shapes[ii]) for ii in range(len(sr_feature_shapes))],
                                dim=1)
