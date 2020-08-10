@@ -536,23 +536,23 @@ class ResNet_RetinaNet_RNN(nn.Module):
             return verb, noun_predicts, bbox_predicts, bbox_exist_list
 
 
-    def class_and_reg_branch(self, batch_size, rnn_output, features, just_rnn):
+    def class_and_reg_branch(self, batch_size, sr_output, features, sr_out_list):
 
-        print('sizes ', rnn_output.size(), features[0].shape, just_rnn.size())
+        #print('sizes ', rnn_output.size(), features[0].shape, just_rnn.size())
 
-        rnn_feature_mult = [rnn_output.view(batch_size, 512, 1, 1).expand(feature.shape) * feature for feature in
+        sr_feature_mult = [sr_output.view(batch_size, 512, 1, 1).expand(feature.shape) * feature for feature in
                             features]
-        rnn_feature_shapes = [torch.cat([just_rnn[ii], features[ii], rnn_feature_mult[ii]], dim=1) for ii in
+        sr_feature_shapes = [torch.cat([sr_out_list[ii], features[ii], sr_feature_mult[ii]], dim=1) for ii in
                               range(len(features))]
 
-        print('in size for cls and reg branch ', rnn_feature_shapes[0].size())
+        print('in size for cls and reg branch ', sr_feature_shapes[0].size())
 
-        regression = torch.cat([self.regressionModel(rnn_feature_shapes[ii]) for ii in range(len(rnn_feature_shapes))],
+        regression = torch.cat([self.regressionModel(sr_feature_shapes[ii]) for ii in range(len(sr_feature_shapes))],
                                dim=1)
         classifications = []
         bbox_exist = []
-        for ii in range(len(rnn_feature_shapes)):
-            classication = self.classificationModel(rnn_feature_shapes[ii])
+        for ii in range(len(sr_feature_shapes)):
+            classication = self.classificationModel(sr_feature_shapes[ii])
             classifications.append(classication[0])
             bbox_exist.append(classication[1])
 
