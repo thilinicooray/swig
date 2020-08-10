@@ -45,8 +45,8 @@ def main(args=None):
 
     writer, log_dir = init_log_dir(parser)
 
-    if not os.path.exists(args.output_dir):
-        os.mkdir(args.output_dir)
+    if not os.path.exists(parser.output_dir):
+        os.mkdir(parser.output_dir)
 
     with open('./SWiG_jsons/dev.json') as f:
         dev_gt = json.load(f)
