@@ -155,7 +155,7 @@ class Attention(nn.Module):
 
 
 class PyramidFeatures(nn.Module):
-    def __init__(self, C3_size, C4_size, C5_size, feature_size=256):
+    def __init__(self, C3_size, C4_size, C5_size, feature_size=512):
         super(PyramidFeatures, self).__init__()
 
         # upsample C5 to get P5 from the FPN paper
@@ -537,6 +537,9 @@ class ResNet_RetinaNet_RNN(nn.Module):
 
 
     def class_and_reg_branch(self, batch_size, rnn_output, features, just_rnn):
+
+        print('sizes ', rnn_output.size(), features[0].shape, just_rnn.size())
+
         rnn_feature_mult = [rnn_output.view(batch_size, 512, 1, 1).expand(feature.shape) * feature for feature in
                             features]
         rnn_feature_shapes = [torch.cat([just_rnn[ii], features[ii], rnn_feature_mult[ii]], dim=1) for ii in
