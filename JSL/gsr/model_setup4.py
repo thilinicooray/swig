@@ -443,7 +443,7 @@ class ResNet_RetinaNet_RNN(nn.Module):
         img_org = x4.view(batch_size, 2048, -1)
         v = img_org.permute(0, 2, 1)
 
-
+        fused_input = None
         for i in range(6):
 
             role_embd = self.vrole_combo_embedding(roles[:,i])
