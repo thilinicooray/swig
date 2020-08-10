@@ -545,7 +545,7 @@ class ResNet_RetinaNet_RNN(nn.Module):
 
         #print('sizes ', rnn_output.size(), features[0].shape, just_rnn.size())
 
-        sr_feature_mult = [sr_output.view(batch_size, 512, 1, 1).expand(feature.shape) * feature for feature in
+        sr_feature_mult = [sr_output.view(batch_size, 256, 1, 1).expand(feature.shape) * feature for feature in
                             features]
         sr_feature_shapes = [torch.cat([sr_out_list[ii], features[ii], sr_feature_mult[ii]], dim=1) for ii in
                               range(len(features))]
