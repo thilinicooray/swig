@@ -6,7 +6,7 @@ import torch
 import torch.optim as optim
 from torchvision import datasets, models, transforms
 from tensorboardX import SummaryWriter
-import model_setup1
+import model_setup4
 from dataloader import CSVDataset, collater, Resizer, AspectRatioBasedSampler, Augmenter, UnNormalizer, Normalizer
 from torch.utils.data import Dataset, DataLoader
 
@@ -58,7 +58,7 @@ def main(args=None):
         noun_dict = all['nouns']
 
     dataloader_train, dataset_train, dataloader_val, dataset_val = init_data(parser, verb_orders)
-    retinanet = model_setup1.resnet50(num_classes=dataset_train.num_classes(), num_nouns=dataset_train.num_nouns(), parser=parser, pretrained=True)
+    retinanet = model_setup4.resnet50(num_classes=dataset_train.num_classes(), num_nouns=dataset_train.num_nouns(), parser=parser, pretrained=True)
 
 
     utils.load_net(parser.pretrained_sr_model, [retinanet])
