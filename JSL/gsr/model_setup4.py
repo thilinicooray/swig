@@ -155,7 +155,7 @@ class Attention(nn.Module):
 
 
 class PyramidFeatures(nn.Module):
-    def __init__(self, C3_size, C4_size, C5_size, feature_size=256):
+    def __init__(self, C3_size, C4_size, C5_size, feature_size=512):
         super(PyramidFeatures, self).__init__()
 
         # upsample C5 to get P5 from the FPN paper
@@ -416,8 +416,8 @@ class ResNet_RetinaNet_RNN(nn.Module):
         self.vrole_combo_embedding = nn.Embedding(1789, 256)
         self.noun_embedding = nn.Embedding(num_nouns, 512)
 
-        self.regressionModel = RegressionModel(768)
-        self.classificationModel = ClassificationModel(768, num_classes=num_classes, feature_size=256)
+        self.regressionModel = RegressionModel(1536)
+        self.classificationModel = ClassificationModel(1536, num_classes=num_classes)
 
         self.query_composer = FCNet([512, 256])
         self.v_att = Attention(2048, 256, 256)
@@ -563,9 +563,10 @@ class ResNet_RetinaNet_RNN(nn.Module):
 
         for idx in range(6):
 
-            reshaped_depdency_incorporated = self.gnn_linear(dependency_incorporated[:,idx])
+            #reshaped_depdency_incorporated = self.gnn_linear(dependency_incorporated[:,idx])
+            reshaped_depdency_incorporated = dependency_incorporated[:,idx]
 
-            expanded = [reshaped_depdency_incorporated.view(batch_size, 256, 1, 1).expand((batch_size, 256, f.shape[2], f.shape[3])) for f in features]
+            expanded = [reshaped_depdency_incorporated.view(batch_size, 512, 1, 1).expand((batch_size, 512, f.shape[2], f.shape[3])) for f in features]
 
             bbox_exist, regression, classification, top_class_per_box = self.class_and_reg_branch(batch_size, reshaped_depdency_incorporated, features, expanded)
 
@@ -627,7 +628,7 @@ class ResNet_RetinaNet_RNN(nn.Module):
     def class_and_reg_branch(self, batch_size, sr_output, features, sr_out_list):
 
 
-        sr_feature_mult = [sr_output.view(batch_size, 256, 1, 1).expand(feature.shape) * feature for feature in
+        sr_feature_mult = [sr_output.view(batch_size, 512, 1, 1).expand(feature.shape) * feature for feature in
                             features]
         sr_feature_shapes = [torch.cat([sr_out_list[ii], features[ii], sr_feature_mult[ii]], dim=1) for ii in
                               range(len(features))]
