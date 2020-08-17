@@ -404,7 +404,7 @@ class ResNet_RetinaNet_RNN(nn.Module):
         #self.vocab_linear_2 = nn.Linear(1024, num_nouns)
 
         self.noun_classifier_roi = SimpleClassifier(
-            256 + 2048, 2 * 512, num_nouns, 0.5)
+            512 + 2048, 2 * 512, num_nouns, 0.5)
 
         self.loss_function = LabelSmoothing(0.2)
 
