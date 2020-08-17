@@ -111,7 +111,7 @@ def main(args=None):
 
 def train(retinanet, optimizer, dataloader_train, parser, epoch_num, writer):
     retinanet.train()
-    retinanet.freeze_bn()
+    #retinanet.freeze_bn()
 
     i = 0
     avg_class_loss = 0.0
