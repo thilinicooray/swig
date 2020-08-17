@@ -203,6 +203,64 @@ class PyramidFeatures(nn.Module):
         # return [P4_x, P5_x, P6_x, P7_x]
 
 
+class ResNet_separate(nn.Module):
+    def __init__(self,block, layers):
+        super(ResNet_separate, self).__init__()
+
+        self.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3, bias=False)
+        self.bn1 = nn.BatchNorm2d(64)
+        self.relu = nn.ReLU(inplace=True)
+        self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
+        self.layer1 = self._make_layer(block, 64, layers[0])
+        self.layer2 = self._make_layer(block, 128, layers[1], stride=2)
+        self.layer3 = self._make_layer(block, 256, layers[2], stride=2)
+        self.layer4 = self._make_layer(block, 512, layers[3], stride=2)
+
+        if block == BasicBlock:
+            self.fpn_sizes = [self.layer2[layers[1] - 1].conv2.out_channels,
+                              self.layer3[layers[2] - 1].conv2.out_channels,
+                              self.layer4[layers[3] - 1].conv2.out_channels]
+        elif block == Bottleneck:
+            self.fpn_sizes = [self.layer2[layers[1] - 1].conv3.out_channels,
+                              self.layer3[layers[2] - 1].conv3.out_channels,
+                              self.layer4[layers[3] - 1].conv3.out_channels]
+
+        self._convs_and_bn_weights()
+
+
+    def _convs_and_bn_weights(self):
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d):
+                n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
+                m.weight.data.normal_(0, math.sqrt(2. / n))
+            elif isinstance(m, nn.BatchNorm2d):
+                m.weight.data.fill_(1)
+                m.bias.data.zero_()
+
+
+    def _make_layer(self, block, planes, blocks, stride=1):
+        downsample = None
+        if stride != 1 or self.inplanes != planes * block.expansion:
+            downsample = nn.Sequential(
+                nn.Conv2d(self.inplanes, planes * block.expansion,
+                          kernel_size=1, stride=stride, bias=False),
+                nn.BatchNorm2d(planes * block.expansion),
+            )
+
+        layers = []
+        layers.append(block(self.inplanes, planes, stride, downsample))
+        self.inplanes = planes * block.expansion
+        for i in range(1, blocks):
+            layers.append(block(self.inplanes, planes))
+
+        return nn.Sequential(*layers)
+
+    def forward(self):
+        return
+
+
+
+
 class RegressionModel(nn.Module):
     def __init__(self, num_features_in, num_anchors=5, feature_size=256):
         super(RegressionModel, self).__init__()
@@ -320,6 +378,10 @@ class ResNet_RetinaNet_RNN(nn.Module):
         self.num_nouns = num_nouns
 
         self._init_resnet(block, layers)
+
+        self.resnetfpn = ResNet_separate(block, layers)
+
+
         self.fpn = PyramidFeatures(self.fpn_sizes[0], self.fpn_sizes[1], self.fpn_sizes[2])
 
         self.hidden_size = parser.hidden_size
@@ -410,10 +472,29 @@ class ResNet_RetinaNet_RNN(nn.Module):
         x4 = self.layer4(x3)
 
 
-        image_predict = self.avgpool(x4).squeeze()
+        x_sep = self.resnetfpn.conv1(img_batch)
+        x_sep = self.resnetfpn.bn1(x_sep)
+        x_sep = self.resnetfpn.relu(x_sep)
+        x_sep = self.resnetfpn.maxpool(x_sep)
+        x1_sep = self.resnetfpn.layer1(x_sep)
+
+        '''if detach_resnet:
+            with torch.no_grad():
+                x2 = self.layer2(x1)
+                x3 = self.layer3(x2)
+                x4 = self.layer4(x3)
+        else:
+            x2 = self.layer2(x1)
+            x3 = self.layer3(x2)
+            x4 = self.layer4(x3)'''
+        x2_sep = self.resnetfpn.layer2(x1_sep)
+        x3_sep = self.resnetfpn.layer3(x2_sep)
+        x4_sep = self.resnetfpn.layer4(x3_sep)
+
+
 
         # Get feature pyramid
-        features = self.fpn(x2, x3, x4)
+        features = self.fpn(x2_sep, x3_sep, x4_sep)
         anchors = self.anchors(img_batch)
         features.pop(0)  # SARAH - remove feature batch
 
@@ -659,5 +740,6 @@ def resnet50(num_classes, num_nouns, parser, pretrained=False, **kwargs):
         state_dict['fc.weight'] = x.weight
         state_dict['fc.bias'] = x.bias
         model.load_state_dict(state_dict, strict=False)
+        model.resnetfpn.load_state_dict(state_dict, strict=False)
     return model
 

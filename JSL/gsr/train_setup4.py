@@ -68,6 +68,7 @@ def main(args=None):
 
     utils.set_trainable(retinanet, False)
     utils.set_trainable(retinanet.fpn, True)
+    utils.set_trainable(retinanet.resnetfpn, True)
     utils.set_trainable(retinanet.regressionModel, True)
     utils.set_trainable(retinanet.classificationModel, True)
     utils.set_trainable(retinanet.noun_classifier_roi, True)
@@ -76,6 +77,7 @@ def main(args=None):
 
     optimizer = torch.optim.Adamax([
         {'params': retinanet.fpn.parameters()},
+        {'params': retinanet.resnetfpn.parameters()},
         {'params': retinanet.regressionModel.parameters()},
         {'params': retinanet.classificationModel.parameters()},
         {'params': retinanet.noun_classifier_roi.parameters()},
@@ -86,8 +88,8 @@ def main(args=None):
 
 
 
-    #retinanet = torch.nn.DataParallel(retinanet).cuda()
-    retinanet = retinanet.cuda()
+    retinanet = torch.nn.DataParallel(retinanet).cuda()
+    #retinanet = retinanet.cuda()
 
     #optimizer = optim.Adam(retinanet.parameters(), lr=parser.lr)
 
@@ -101,7 +103,7 @@ def main(args=None):
 
         if eval_avg > best_eval:
             best_eval = eval_avg
-            torch.save({'state_dict': retinanet.state_dict(), 'optimizer': optimizer.state_dict()}, parser.output_dir + "/{}.pth".format( parser.model_saving_name))
+            torch.save({'state_dict': retinanet.module.state_dict(), 'optimizer': optimizer.state_dict()}, parser.output_dir + "/{}.pth".format( parser.model_saving_name))
             print('New best model at epoch ', epoch_num)
 
             scheduler.step()
