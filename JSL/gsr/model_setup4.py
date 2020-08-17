@@ -207,6 +207,8 @@ class ResNet_separate(nn.Module):
     def __init__(self,block, layers):
         super(ResNet_separate, self).__init__()
 
+        self.inplanes = 64
+
         self.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3, bias=False)
         self.bn1 = nn.BatchNorm2d(64)
         self.relu = nn.ReLU(inplace=True)
