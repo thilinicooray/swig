@@ -506,7 +506,7 @@ class ResNet_RetinaNet_RNN(nn.Module):
             roi_features = self.get_local_features(x4, previous_boxes, img_batch.shape[2], img_batch.shape[3])
             #noun_pred = torch.cat((roi_features, reshaped_depdency_incorporated), dim=1)
             #noun_pred = self.noun_classifier_roi(noun_pred)
-            noun_pred = self.noun_classifier(reshaped_depdency_incorporated)
+            noun_pred = self.noun_classifier(dependency_incorporated[:,idx])
             classification_guess = torch.argmax(noun_pred, dim=1)
 
             if return_local_features:
