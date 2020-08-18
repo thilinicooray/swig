@@ -747,6 +747,6 @@ def resnet50(num_classes, num_nouns, parser, pretrained=False, **kwargs):
         state_dict['fc.weight'] = x.weight
         state_dict['fc.bias'] = x.bias
         model.load_state_dict(state_dict, strict=False)
-        model.resnetfpn.load_state_dict(state_dict, strict=False)
+        #model.resnetfpn.load_state_dict(state_dict, strict=False)
     return model
 
