@@ -70,7 +70,6 @@ def main(args=None):
     utils.set_trainable(retinanet.fpn, True)
     utils.set_trainable(retinanet.regressionModel, True)
     utils.set_trainable(retinanet.classificationModel, True)
-    utils.set_trainable(retinanet.noun_classifier_roi, True)
     utils.set_trainable(retinanet.gnn_linear, True)
 
 
@@ -78,9 +77,8 @@ def main(args=None):
         {'params': retinanet.fpn.parameters()},
         {'params': retinanet.regressionModel.parameters()},
         {'params': retinanet.classificationModel.parameters()},
-        {'params': retinanet.noun_classifier_roi.parameters()},
         {'params': retinanet.gnn_linear.parameters()},
-    ], lr=1e-3)
+    ], lr=5e-4)
 
     scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9)
 

@@ -342,8 +342,11 @@ class ResNet_RetinaNet_RNN(nn.Module):
         #self.vocab_linear = nn.Linear(2304, 1024)
         #self.vocab_linear_2 = nn.Linear(1024, num_nouns)
 
-        self.noun_classifier_roi = SimpleClassifier(
-            256 + 2048, 2 * 512, num_nouns, 0.5)
+        '''self.noun_classifier_roi = SimpleClassifier(
+            256 + 2048, 2 * 512, num_nouns, 0.5)'''
+
+        self.noun_classifier = SimpleClassifier(
+            512, 2 * 512, num_nouns, 0.5)
 
         self.loss_function = LabelSmoothing(0.2)
 
@@ -501,17 +504,18 @@ class ResNet_RetinaNet_RNN(nn.Module):
                 previous_boxes[bbox_exist < 0] = -1
 
             roi_features = self.get_local_features(x4, previous_boxes, img_batch.shape[2], img_batch.shape[3])
-            noun_pred = torch.cat((roi_features, reshaped_depdency_incorporated), dim=1)
-            noun_pred = self.noun_classifier_roi(noun_pred)
+            #noun_pred = torch.cat((roi_features, reshaped_depdency_incorporated), dim=1)
+            #noun_pred = self.noun_classifier_roi(noun_pred)
+            noun_pred = self.noun_classifier(reshaped_depdency_incorporated)
             classification_guess = torch.argmax(noun_pred, dim=1)
 
             if return_local_features:
                 local_features.append(roi_features)
 
-            if self.training:
+            '''if self.training:
                 for noun_index in range(4, 7):
                     noun_gt = annotations[torch.arange(batch_size), i, noun_index]
-                    noun_loss += self.loss_function(noun_pred, noun_gt.squeeze().long().cuda())
+                    noun_loss += self.loss_function(noun_pred, noun_gt.squeeze().long().cuda())'''
 
 
             if self.training:
@@ -537,7 +541,7 @@ class ResNet_RetinaNet_RNN(nn.Module):
             all_class_loss += class_loss
             all_reg_loss += reg_loss
             all_bbox_loss += bbox_loss
-            return all_class_loss, all_reg_loss, all_bbox_loss, noun_loss
+            return all_class_loss, all_reg_loss, all_bbox_loss, None
 
         else:
             if return_local_features:
