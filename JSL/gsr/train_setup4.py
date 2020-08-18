@@ -163,7 +163,7 @@ def train(retinanet, optimizer, dataloader_train, parser, epoch_num, writer):
             avg_bbox_loss = 0.0
             avg_noun_loss = 0.0
 
-        loss = class_loss.mean() + reg_loss.mean() + bbox_loss.mean() + all_noun_loss.mean()
+        loss = class_loss.mean() + reg_loss.mean() + bbox_loss.mean() 
 
         if bool(loss == 0):
             continue
