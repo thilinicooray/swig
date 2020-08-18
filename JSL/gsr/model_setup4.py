@@ -381,7 +381,7 @@ class ResNet_RetinaNet_RNN(nn.Module):
 
         self._init_resnet(block, layers)
 
-        self.resnetfpn = ResNet_separate(block, layers)
+        #self.resnetfpn = ResNet_separate(block, layers)
 
 
         self.fpn = PyramidFeatures(self.fpn_sizes[0], self.fpn_sizes[1], self.fpn_sizes[2])
@@ -477,11 +477,11 @@ class ResNet_RetinaNet_RNN(nn.Module):
         x4 = self.layer4(x3)
 
 
-        x_sep = self.resnetfpn.conv1(img_batch)
+        '''x_sep = self.resnetfpn.conv1(img_batch)
         x_sep = self.resnetfpn.bn1(x_sep)
         x_sep = self.resnetfpn.relu(x_sep)
         x_sep = self.resnetfpn.maxpool(x_sep)
-        x1_sep = self.resnetfpn.layer1(x_sep)
+        x1_sep = self.resnetfpn.layer1(x_sep)'''
 
         '''if detach_resnet:
             with torch.no_grad():
@@ -492,14 +492,14 @@ class ResNet_RetinaNet_RNN(nn.Module):
             x2 = self.layer2(x1)
             x3 = self.layer3(x2)
             x4 = self.layer4(x3)'''
-        x2_sep = self.resnetfpn.layer2(x1_sep)
+        '''x2_sep = self.resnetfpn.layer2(x1_sep)
         x3_sep = self.resnetfpn.layer3(x2_sep)
-        x4_sep = self.resnetfpn.layer4(x3_sep)
+        x4_sep = self.resnetfpn.layer4(x3_sep)'''
 
 
 
         # Get feature pyramid
-        features = self.fpn(x2_sep, x3_sep, x4_sep)
+        features = self.fpn(x2, x3, x4)
         anchors = self.anchors(img_batch)
         features.pop(0)  # SARAH - remove feature batch
 

@@ -68,7 +68,6 @@ def main(args=None):
 
     utils.set_trainable(retinanet, False)
     utils.set_trainable(retinanet.fpn, True)
-    utils.set_trainable(retinanet.resnetfpn, True)
     utils.set_trainable(retinanet.regressionModel, True)
     utils.set_trainable(retinanet.classificationModel, True)
     utils.set_trainable(retinanet.gnn_linear, True)
@@ -76,7 +75,6 @@ def main(args=None):
 
     optimizer = torch.optim.Adamax([
         {'params': retinanet.fpn.parameters()},
-        {'params': retinanet.resnetfpn.parameters()},
         {'params': retinanet.regressionModel.parameters()},
         {'params': retinanet.classificationModel.parameters()},
         {'params': retinanet.gnn_linear.parameters()},
@@ -163,7 +161,7 @@ def train(retinanet, optimizer, dataloader_train, parser, epoch_num, writer):
             avg_bbox_loss = 0.0
             avg_noun_loss = 0.0
 
-        loss = class_loss.mean() + reg_loss.mean() + bbox_loss.mean() 
+        loss = class_loss.mean() + reg_loss.mean() + bbox_loss.mean()
 
         if bool(loss == 0):
             continue
