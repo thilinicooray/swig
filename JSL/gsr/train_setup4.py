@@ -137,7 +137,7 @@ def train(retinanet, optimizer, dataloader_train, parser, epoch_num, writer):
         avg_class_loss += class_loss.mean().item()
         avg_reg_loss += reg_loss.mean().item()
         avg_bbox_loss += bbox_loss.mean().item()
-        avg_noun_loss +=  all_noun_loss.mean().item()
+        #avg_noun_loss +=  all_noun_loss.mean().item()
 
         if i % parser.iteration == 0:
 
