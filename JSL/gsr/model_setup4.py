@@ -620,7 +620,7 @@ class ResNet_RetinaNet_RNN(nn.Module):
             all_class_loss += class_loss
             all_reg_loss += reg_loss
             all_bbox_loss += bbox_loss
-            return all_class_loss, all_reg_loss, all_bbox_loss, noun_loss
+            return all_class_loss, all_reg_loss, all_bbox_loss, None
 
         else:
             if return_local_features:
