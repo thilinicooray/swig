@@ -151,7 +151,10 @@ def train(retinanet, optimizer, dataloader_train, parser, epoch_num, writer):
                               epoch_num * (len(dataloader_train)) + i)
             writer.add_scalar("train/bbox_loss", avg_bbox_loss / parser.iteration,
                               epoch_num * (len(dataloader_train)) + i)
-            writer.add_scalar("train/noun_loss", avg_noun_loss / parser.iteration,
+            '''writer.add_scalar("train/noun_loss", avg_noun_loss / parser.iteration,
+                              epoch_num * (len(dataloader_train)) + i)'''
+
+            writer.add_scalar("train/noun_loss", 0,
                               epoch_num * (len(dataloader_train)) + i)
 
 
