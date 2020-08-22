@@ -591,10 +591,10 @@ class ResNet_RetinaNet_RNN(nn.Module):
             if return_local_features:
                 local_features.append(roi_features)
 
-            '''if self.training:
+            if self.training:
                 for noun_index in range(4, 7):
                     noun_gt = annotations[torch.arange(batch_size), i, noun_index]
-                    #noun_loss += self.loss_function(noun_pred, noun_gt.squeeze().long().cuda())'''
+                    noun_loss += self.loss_function(noun_pred, noun_gt.squeeze().long().cuda())
 
 
             if self.training:
@@ -620,7 +620,7 @@ class ResNet_RetinaNet_RNN(nn.Module):
             all_class_loss += class_loss
             all_reg_loss += reg_loss
             all_bbox_loss += bbox_loss
-            return all_class_loss, all_reg_loss, all_bbox_loss, None
+            return all_class_loss, all_reg_loss, all_bbox_loss, noun_loss
 
         else:
             if return_local_features:
