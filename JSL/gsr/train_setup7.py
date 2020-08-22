@@ -145,7 +145,7 @@ def train(retinanet, optimizer, dataloader_train, parser, epoch_num, writer):
         avg_class_loss += class_loss.mean().item()
         avg_reg_loss += reg_loss.mean().item()
         avg_bbox_loss += bbox_loss.mean().item()
-        #avg_noun_loss +=  all_noun_loss.mean().item()
+        avg_noun_loss +=  all_noun_loss.mean().item()
 
         if i % parser.iteration == 0:
 
@@ -159,8 +159,8 @@ def train(retinanet, optimizer, dataloader_train, parser, epoch_num, writer):
                               epoch_num * (len(dataloader_train)) + i)
             writer.add_scalar("train/bbox_loss", avg_bbox_loss / parser.iteration,
                               epoch_num * (len(dataloader_train)) + i)
-            '''writer.add_scalar("train/noun_loss", avg_noun_loss / parser.iteration,
-                              epoch_num * (len(dataloader_train)) + i)'''
+            writer.add_scalar("train/noun_loss", avg_noun_loss / parser.iteration,
+                              epoch_num * (len(dataloader_train)) + i)
 
             writer.add_scalar("train/noun_loss", 0,
                               epoch_num * (len(dataloader_train)) + i)
@@ -171,7 +171,7 @@ def train(retinanet, optimizer, dataloader_train, parser, epoch_num, writer):
             avg_bbox_loss = 0.0
             avg_noun_loss = 0.0
 
-        loss = class_loss.mean() + reg_loss.mean() + bbox_loss.mean()
+        loss = class_loss.mean() + reg_loss.mean() + bbox_loss.mean() + all_noun_loss.mean()
 
         if bool(loss == 0):
             continue
