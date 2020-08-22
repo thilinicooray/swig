@@ -102,7 +102,7 @@ def main(args=None):
             torch.save({'state_dict': retinanet.state_dict(), 'optimizer': optimizer.state_dict()}, parser.output_dir + "/{}.pth".format( parser.model_saving_name))
             print('New best model at epoch ', epoch_num)
 
-            scheduler.step()
+        scheduler.step()
 
 
 def train(retinanet, optimizer, dataloader_train, parser, epoch_num, writer):
