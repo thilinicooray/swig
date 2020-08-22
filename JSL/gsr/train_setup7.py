@@ -70,12 +70,12 @@ def main(args=None):
 
 
     optimizer = torch.optim.Adamax([
-        {'params': retinanet.conv1.parameters(), 'lr': 5e-5},
-        {'params': retinanet.bn1.parameters(), 'lr': 5e-5},
-        {'params': retinanet.layer1.parameters(), 'lr': 5e-5},
-        {'params': retinanet.layer2.parameters(), 'lr': 5e-5},
-        {'params': retinanet.layer3.parameters(), 'lr': 5e-5},
-        {'params': retinanet.layer4.parameters(), 'lr': 5e-5},
+        {'params': retinanet.conv1.parameters()},
+        {'params': retinanet.bn1.parameters()},
+        {'params': retinanet.layer1.parameters()},
+        {'params': retinanet.layer2.parameters()},
+        {'params': retinanet.layer3.parameters()},
+        {'params': retinanet.layer4.parameters()},
         {'params': retinanet.verb_embeding.parameters()},
         {'params': retinanet.vrole_combo_embedding.parameters()},
         {'params': retinanet.query_composer.parameters()},
@@ -87,8 +87,8 @@ def main(args=None):
         {'params': retinanet.regressionModel.parameters()},
         {'params': retinanet.classificationModel.parameters()},
         {'params': retinanet.gnn_linear.parameters()},
-        {'params': retinanet.noun_classifier.parameters()},
-    ], lr=1e-3)
+        {'params': retinanet.noun_classifier_roi.parameters()},
+    ], lr=5e-4)
 
     scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9)
 
